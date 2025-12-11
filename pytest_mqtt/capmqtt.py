@@ -57,12 +57,8 @@ class MqttClientAdapter(threading.Thread):
     def setup(self):
         client = self.client
         client.on_socket_open = self.on_socket_open
-        client.on_connect = (
-            self.on_connect_v1 if self.use_legacy_api else self.on_connect
-        )
-        client.on_subscribe = (
-            self.on_subscribe_v1 if self.use_legacy_api else self.on_subscribe
-        )
+        client.on_connect = self.on_connect_v1 if self.use_legacy_api else self.on_connect
+        client.on_subscribe = self.on_subscribe_v1 if self.use_legacy_api else self.on_subscribe
         client.on_message = self.on_message
         if self.on_message_callback:
             client.on_message = self.on_message_callback
@@ -89,9 +85,7 @@ class MqttClientAdapter(threading.Thread):
     def on_connect(self, client, userdata, flags, reason_code, properties):
         logger.debug("[PYTEST] Connected to MQTT broker")
 
-    def on_subscribe_v1(
-        self, client, userdata, mid, granted_qos, properties=None
-    ):  # legacy API version 1
+    def on_subscribe_v1(self, client, userdata, mid, granted_qos, properties=None):  # legacy API version 1
         logger.debug("[PYTEST] Subscribed to MQTT topic(s)")
 
     def on_subscribe(self, client, userdata, mid, reason_codes, properties):
@@ -100,9 +94,7 @@ class MqttClientAdapter(threading.Thread):
     def on_message(self, client, userdata, msg):
         logger.debug("[PYTEST] MQTT message received: %s", msg)
 
-    def publish(
-        self, topic: str, payload: mqtt.PayloadType, **kwargs
-    ) -> mqtt.MQTTMessageInfo:
+    def publish(self, topic: str, payload: mqtt.PayloadType, **kwargs) -> mqtt.MQTTMessageInfo:
         message_info = self.client.publish(topic, payload, **kwargs)
         message_info.wait_for_publish()
         return message_info
@@ -162,9 +154,7 @@ class MqttCaptureFixture:
     ) -> t.List[t.Tuple[str, t.Union[str, bytes], t.Union[t.Dict, None]]]:
         return [(item.topic, item.payload, item.userdata) for item in self._buffer]
 
-    def publish(
-        self, topic: str, payload: mqtt.PayloadType, **kwargs
-    ) -> mqtt.MQTTMessageInfo:
+    def publish(self, topic: str, payload: mqtt.PayloadType, **kwargs) -> mqtt.MQTTMessageInfo:
         message_info = self.mqtt_client.publish(topic=topic, payload=payload, **kwargs)
         # Make the MQTT client publish and receive the message.
         delay()
